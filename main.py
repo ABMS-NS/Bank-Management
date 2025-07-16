@@ -40,7 +40,7 @@ def loop_menu(conta_logada, contas, lista_boletos):
     while True:
         print("\n=========== Menu de Operações ===========\n")
         notificacoes(conta_logada, lista_boletos)  # Exibe notificações de boletos vencidos
-        opcao = ask_int("\n1. Consultar Saldo\n2. Sacar\n3. Depositar\n4. Ver Histórico\n5. Transferir\n6. Trocar de Conta\n7. Pagar boleto\n8. Câmbio Real -> Dolar \n9. Câmbio Dolar -> Real\n10. Emprestimo\n11. Sair\n")
+        opcao = ask_int("\n1. Consultar Saldo\n2. Sacar\n3. Depositar\n4. Ver Histórico\n5. Transferir\n6. Trocar de Conta\n7. Pagar boleto\n8. Câmbio Real -> Dolar \n9. Câmbio Dolar -> Real\n10. Emprestimo\n11. Talão de cheque\n12. Criar meta de investimento\n 13. Depositar na meta\n 14. Atendimento ao cliente\n 15. Sair\n")
 
         #opcao == "1" é consultar o saldo
         if opcao == "1":
@@ -166,7 +166,7 @@ def loop_menu(conta_logada, contas, lista_boletos):
             valor_usd = float(input("Digite o valor em USD que deseja converter para BRL: "))
             if valor_usd > conta_logada.saldo_dolar:
                 print("Saldo em USD insuficiente para conversão.")
-                return
+                continue
 
             valor_brl = converter_para_brl(valor_usd)
             valor_brl = arredondar(valor_brl)
@@ -202,7 +202,55 @@ def loop_menu(conta_logada, contas, lista_boletos):
             print(f"Valor total a pagar (com juros): R$ {valor_total:.2f}")
             print(f"Vencimento em: {vencimento}")
 
-        elif opcao == "11":
+        #opção de talão de cheque
+        elif opcao == "11": 
+            conta_logada.verificar_talao_cheque()
+        
+        #criar nova meta
+        elif opcao == "12":
+                resposta = input("Deseja criar uma nova meta? s/n: ").strip().lower()
+                if resposta == "s":
+                    titulo = input("Digite o titulo da Meta: ")
+                    valor_alvo = input("Digite o valor alvo da sua meta: ")
+                    conta_logada.metas.append(metas_investimento(titulo,valor_alvo))
+                    print("Meta criada com sucesso!")
+
+        #adicionar na meta
+        elif opcao == "13":
+            if not conta_logada.metas:
+                print("Você não possui metas de investimento.")
+                continue
+            
+            print("Suas metas de investimento:")
+            for i, meta in enumerate(conta_logada.metas):
+                print(f"{i + 1}. {meta.titulo} - Valor alvo: R$ {meta.valor_alvo:.2f} - Valor atual: R$ {meta.valor_atual:.2f}")
+            
+            try:
+                escolha = int(input("Digite o número da meta: ")) - 1
+                if 0 <= escolha < len(conta_logada.metas):
+                    meta_escolhida = conta_logada.metas[escolha]
+                    valor_deposito = float(input("Digite o valor a depositar na meta: "))
+                    
+                    if valor_deposito <= 0:
+                        print("Valor deve ser positivo.")
+                        continue
+                    
+                    if valor_deposito > conta_logada.saldo:
+                        print("Saldo insuficiente.")
+                        continue
+                    
+                    meta_escolhida.depositar_na_meta(valor_deposito, conta_logada)
+                    print(f"Depósito de R$ {valor_deposito:.2f} realizado na meta '{meta_escolhida.titulo}'!")
+                    print(f"Progresso: R$ {meta_escolhida.valor_atual:.2f} / R$ {meta_escolhida.valor_alvo:.2f}")
+                else:
+                    print("Escolha inválida.")
+            except ValueError:
+                print("Entrada inválida.")
+
+        elif opcao == "14":
+            print("Para tirar dúvidas, basta enviar um email para bancoFN@gmail.com")
+
+        elif opcao == "15":
             print("Saindo do sistema. Até logo!")
             break
 
@@ -215,12 +263,12 @@ def main():
     contas = [] # lista para armazenar as contas criadas e fazer as validações necessárias
 
     #inicializando contas de exemplo para o banco
-    #parâmetros (Nome do usuário, Senha, Saldo inicial)
-    contas.append(Conta("Kris", "1234", 1000))
-    contas.append(Conta("Susie", "9876", 1500))
-    contas.append(Conta("Aubrey", "4567", 2500))
-    contas.append(Conta("Kel", "999", 99999))
-    contas.append(Conta("Mari", "4444", 0))
+    #parâmetros (Nome do usuário, Senha, Saldo inicial, Talões de Cheque)
+    contas.append(Conta("Kris", "1234", 1000, 0))
+    contas.append(Conta("Susie", "9876", 1500, 1))
+    contas.append(Conta("Aubrey", "4567", 2500, 0))
+    contas.append(Conta("Kel", "999", 99999, 0))
+    contas.append(Conta("Mari", "4444", 0, 1))
 
     #inicializando boletos de exemplo
     lista_boletos = [] # lista para armazenar os boletos criados
